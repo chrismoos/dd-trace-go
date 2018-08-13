@@ -72,6 +72,9 @@ func newTracer(opts ...StartOption) *tracer {
 	if c.propagator == nil {
 		c.propagator = NewPropagator(nil)
 	}
+	if c.exporter == nil {
+		c.exporter = newDefaultExporter(c.agentAddr)
+	}
 	t := &tracer{config: c}
 	return t
 }
@@ -138,7 +141,13 @@ func (t *tracer) StartSpan(operationName string, options ...ddtrace.StartSpanOpt
 }
 
 // Stop stops the tracer.
-func (t *tracer) Stop() { /* Deprecate in v2? */ }
+func (t *tracer) Stop() {
+	if v, ok := t.config.exporter.(interface {
+		Flush()
+	}); ok {
+		v.Flush()
+	}
+}
 
 // Inject uses the configured or default TextMap Propagator.
 func (t *tracer) Inject(ctx ddtrace.SpanContext, carrier interface{}) error {

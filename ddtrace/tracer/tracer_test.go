@@ -1,6 +1,8 @@
 package tracer
 
 import (
+	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -25,7 +27,7 @@ func (t *tracer) newChildSpan(name string, parent *span) *span {
 	return t.StartSpan(name, ChildOf(parent.Context())).(*span)
 }
 
-// TestTracerFrenetic does frenetic testing in a scenario where the tracer is started
+// TestTracerCleanStop does frenetic testing in a scenario where the tracer is started
 // and stopped in parallel with spans being created.
 func TestTracerCleanStop(t *testing.T) {
 	if testing.Short() {
@@ -33,7 +35,9 @@ func TestTracerCleanStop(t *testing.T) {
 	}
 	var wg sync.WaitGroup
 
-	n := 5000
+	n := 200
+	log.SetOutput(ioutil.Discard)
+	defer log.SetOutput(os.Stderr)
 
 	wg.Add(3)
 	for j := 0; j < 3; j++ {
